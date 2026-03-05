@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, Menu, Tray, nativeImage } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, Menu, Tray, nativeImage, systemPreferences } = require('electron');
 const path = require('path');
 
 let overlayWindow = null;
@@ -42,23 +42,48 @@ function createOverlayWindow() {
 }
 
 function createTray() {
-  // Load the tray icon
-  const trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/tray.png'));
+  // On macOS, Tray creates an item in the top menu bar (like Docker, battery, etc.)
+  // Use template icon for automatic dark/light mode adaptation
+  const trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/tray-template.png'));
   tray = new Tray(trayIcon);
+  
+  // Set a title to show alongside the icon in the menu bar
+  tray.setTitle('ScreenInk');
 
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Toggle Overlay (⌘⇧A)',
+      accelerator: 'CommandOrControl+Shift+A',
       click: () => toggleOverlay()
     },
     { type: 'separator' },
     {
+      label: 'Clear Canvas',
+      accelerator: 'CommandOrControl+Shift+C',
+      click: () => {
+        if (overlayWindow) {
+          overlayWindow.webContents.send('clear-canvas');
+        }
+      }
+    },
+    {
+      label: 'Undo',
+      accelerator: 'CommandOrControl+Z',
+      click: () => {
+        if (overlayWindow && isActive) {
+          overlayWindow.webContents.send('undo');
+        }
+      }
+    },
+    { type: 'separator' },
+    {
       label: 'Quit ScreenInk',
+      accelerator: 'CommandOrControl+Q',
       click: () => app.quit()
     }
   ]);
 
-  tray.setToolTip('ScreenInk');
+  tray.setToolTip('ScreenInk - Screen Annotation Tool');
   tray.setContextMenu(contextMenu);
 }
 
@@ -77,6 +102,7 @@ function toggleOverlay() {
 
 app.whenReady().then(() => {
   createOverlayWindow();
+  createTray();
 
   // Global shortcut to toggle overlay: Cmd+Shift+A
   globalShortcut.register('CommandOrControl+Shift+A', () => {
