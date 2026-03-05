@@ -42,10 +42,9 @@ function createOverlayWindow() {
 }
 
 function createTray() {
-  // Create a simple tray icon programmatically
-  const iconSize = 16;
-  const icon = nativeImage.createEmpty();
-  tray = new Tray(icon);
+  // Load the tray icon
+  const trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/tray.png'));
+  tray = new Tray(trayIcon);
 
   const contextMenu = Menu.buildFromTemplate([
     {

@@ -14,7 +14,14 @@
     "productName": "ScreenInk",
     "mac": {
       "category": "public.app-category.utilities",
-      "target": ["dmg"]
+      "target": ["dmg"],
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "icon": "assets/icon.png"
     },
     "files": [
       "src/**/*",

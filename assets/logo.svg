@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="penGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#63b3ed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4299e1;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a202c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d3748;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="#2d3748" stroke-width="4"/>
+  
+  <!-- Pen/Brush shape -->
+  <g transform="translate(256, 256) rotate(-45)">
+    <!-- Pen body -->
+    <rect x="-80" y="-12" width="160" height="24" rx="12" fill="url(#penGradient)"/>
+    
+    <!-- Pen tip -->
+    <path d="M 80,-12 L 100,-8 L 100,8 L 80,12 Z" fill="url(#penGradient)"/>
+    
+    <!-- Pen tip detail -->
+    <circle cx="96" cy="0" r="3" fill="#2d3748"/>
+    
+    <!-- Ink flow effect -->
+    <path d="M 100,0 Q 120,0 140,0" stroke="#63b3ed" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M 100,0 Q 115,5 125,10" stroke="#63b3ed" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M 100,0 Q 115,-5 125,-10" stroke="#63b3ed" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  
+  <!-- Subtle highlight -->
+  <ellipse cx="200" cy="180" rx="60" ry="40" fill="white" opacity="0.1"/>
+</svg>
