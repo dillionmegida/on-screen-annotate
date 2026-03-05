@@ -5,144 +5,144 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ScreenInk Overlay</title>
+<title>ScreenInk</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: transparent; overflow: hidden; width: 100vw; height: 100vh; user-select: none; font-family: 'SF Pro Display', -apple-system, sans-serif; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:transparent; overflow:hidden; width:100vw; height:100vh; user-select:none; font-family:'SF Pro Display',-apple-system,sans-serif; }
 
-  #canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: none; }
+  #canvas { position:fixed; top:0; left:0; width:100vw; height:100vh; display:none; }
 
-  /* ── FAB ── */
+  /* FAB */
   #fab {
-    position: fixed; top: 20px; right: 20px; width: 44px; height: 44px;
-    border-radius: 14px; background: rgba(15,15,20,0.85); backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.08) inset;
-    cursor: pointer; display: none; align-items: center; justify-content: center;
-    color: rgba(255,255,255,0.8); transition: background 0.15s, transform 0.15s;
-    z-index: 99999;
+    position:fixed; top:20px; right:20px; width:44px; height:44px;
+    border-radius:14px; background:rgba(15,15,20,0.85); backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:0 4px 20px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.08) inset;
+    cursor:pointer; display:none; align-items:center; justify-content:center;
+    color:rgba(255,255,255,0.8); transition:background 0.15s,transform 0.15s; z-index:99999;
   }
-  #fab:hover { background: rgba(99,179,237,0.25); color: #63b3ed; transform: scale(1.08); }
-  #fab svg { width: 20px; height: 20px; }
-  #fab::after { content: attr(data-tip); position: absolute; top: calc(100% + 8px); right: 0;
-    background: rgba(0,0,0,0.85); color: #fff; font-size: 11px; white-space: nowrap;
-    padding: 4px 8px; border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-  #fab:hover::after { opacity: 1; }
+  #fab:hover { background:rgba(99,179,237,0.25); color:#63b3ed; transform:scale(1.08); }
+  #fab svg { width:20px; height:20px; }
+  #fab::after { content:attr(data-tip); position:absolute; top:calc(100% + 8px); right:0;
+    background:rgba(0,0,0,0.85); color:#fff; font-size:11px; white-space:nowrap;
+    padding:4px 8px; border-radius:6px; pointer-events:none; opacity:0; transition:opacity 0.2s; }
+  #fab:hover::after { opacity:1; }
 
-  /* ── TOOLBAR ── */
+  /* TOOLBAR */
   #toolbar {
-    position: fixed; left: 50%; bottom: 36px;
-    transform: translateX(-50%) translateY(120px);
-    display: flex; align-items: center; gap: 6px; padding: 10px 14px;
-    background: rgba(15,15,20,0.82); backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.08) inset;
-    transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
-    opacity: 0; pointer-events: none; z-index: 9999;
+    position:fixed; left:50%; bottom:36px;
+    transform:translateX(-50%) translateY(120px);
+    display:flex; align-items:center; gap:6px; padding:10px 14px;
+    background:rgba(15,15,20,0.82); backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.08) inset;
+    transition:transform 0.45s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease;
+    opacity:0; pointer-events:none; z-index:9999;
   }
-  #toolbar.visible { transform: translateX(-50%) translateY(0px); opacity: 1; pointer-events: all; }
+  #toolbar.visible { transform:translateX(-50%) translateY(0); opacity:1; pointer-events:all; }
 
-  .divider { width: 1px; height: 28px; background: rgba(255,255,255,0.12); margin: 0 4px; border-radius: 1px; }
+  .divider { width:1px; height:28px; background:rgba(255,255,255,0.12); margin:0 4px; border-radius:1px; }
 
-  .tool-btn {
-    position: relative; width: 38px; height: 38px; border: none; border-radius: 12px;
-    background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s, transform 0.1s; color: rgba(255,255,255,0.7);
-  }
-  .tool-btn:hover { background: rgba(255,255,255,0.1); color: #fff; transform: scale(1.05); }
-  .tool-btn.active { background: rgba(99,179,237,0.25); color: #63b3ed; box-shadow: 0 0 0 1.5px rgba(99,179,237,0.5); }
-  .tool-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-  .tool-btn::after {
-    content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.85); color: #fff; font-size: 11px; white-space: nowrap;
-    padding: 4px 8px; border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 100000;
-  }
-  .tool-btn:hover::after { opacity: 1; }
+  .tool-btn { position:relative; width:38px; height:38px; border:none; border-radius:12px;
+    background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:background 0.15s,transform 0.1s; color:rgba(255,255,255,0.7); }
+  .tool-btn:hover { background:rgba(255,255,255,0.1); color:#fff; transform:scale(1.05); }
+  .tool-btn.active { background:rgba(99,179,237,0.25); color:#63b3ed; box-shadow:0 0 0 1.5px rgba(99,179,237,0.5); }
+  .tool-btn svg { width:18px; height:18px; flex-shrink:0; }
+  .tool-btn::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.85); color:#fff; font-size:11px; white-space:nowrap;
+    padding:4px 8px; border-radius:6px; pointer-events:none; opacity:0; transition:opacity 0.2s; z-index:100000; }
+  .tool-btn:hover::after { opacity:1; }
 
-  /* toggles */
-  .toggle-row { display: flex; align-items: center; gap: 6px; padding: 0 6px; cursor: pointer; }
-  .toggle-row label { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
-  .toggle-track { width: 30px; height: 17px; border-radius: 100px; background: rgba(255,255,255,0.15); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
-  .toggle-track.on { background: rgba(99,179,237,0.7); }
-  .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-  .toggle-track.on .toggle-thumb { transform: translateX(13px); }
+  .toggle-row { display:flex; align-items:center; gap:6px; padding:0 6px; cursor:pointer; }
+  .toggle-row label { font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
+  .toggle-track { width:30px; height:17px; border-radius:100px; background:rgba(255,255,255,0.15); position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+  .toggle-track.on { background:rgba(99,179,237,0.7); }
+  .toggle-thumb { position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%; background:#fff; transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 1px 3px rgba(0,0,0,0.3); }
+  .toggle-track.on .toggle-thumb { transform:translateX(13px); }
 
-  .color-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s, border-color 0.15s; flex-shrink: 0; }
-  .color-swatch:hover { transform: scale(1.2); }
-  .color-swatch.active { border-color: #fff; transform: scale(1.15); }
+  .color-swatch { width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform 0.15s,border-color 0.15s; flex-shrink:0; }
+  .color-swatch:hover { transform:scale(1.2); }
+  .color-swatch.active { border-color:#fff; transform:scale(1.15); }
 
-  .size-btn { width: 38px; height: 38px; border: none; border-radius: 12px; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; color: rgba(255,255,255,0.7); flex-direction: column; gap: 2px; position: relative; }
-  .size-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-  .size-btn.active { background: rgba(99,179,237,0.2); color: #63b3ed; }
-  .size-btn::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; font-size: 11px; white-space: nowrap; padding: 4px 8px; border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-  .size-btn:hover::after { opacity: 1; }
-  .size-dot { border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .size-btn { width:38px; height:38px; border:none; border-radius:12px; background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:background 0.15s;
+    color:rgba(255,255,255,0.7); flex-direction:column; gap:2px; position:relative; }
+  .size-btn:hover { background:rgba(255,255,255,0.1); color:#fff; }
+  .size-btn.active { background:rgba(99,179,237,0.2); color:#63b3ed; }
+  .size-btn::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.85); color:#fff; font-size:11px; white-space:nowrap;
+    padding:4px 8px; border-radius:6px; pointer-events:none; opacity:0; transition:opacity 0.2s; }
+  .size-btn:hover::after { opacity:1; }
+  .size-dot { border-radius:50%; background:currentColor; flex-shrink:0; }
 
-  .opacity-wrap { display: flex; align-items: center; gap: 6px; padding: 0 4px; }
-  .opacity-wrap label { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; text-transform: uppercase; }
-  input[type=range] { -webkit-appearance: none; width: 64px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); outline: none; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #63b3ed; cursor: pointer; box-shadow: 0 0 4px rgba(99,179,237,0.6); }
+  .opacity-wrap { display:flex; align-items:center; gap:6px; padding:0 4px; }
+  .opacity-wrap label { font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:0.05em; text-transform:uppercase; }
+  input[type=range] { -webkit-appearance:none; width:64px; height:4px; border-radius:2px; background:rgba(255,255,255,0.2); outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#63b3ed; cursor:pointer; box-shadow:0 0 4px rgba(99,179,237,0.6); }
 
-  .action-btn { width: 38px; height: 38px; border: none; border-radius: 12px; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, transform 0.1s; color: rgba(255,255,255,0.5); position: relative; }
-  .action-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); transform: scale(1.05); }
-  .action-btn.danger:hover { background: rgba(252,129,129,0.15); color: #fc8181; }
-  .action-btn::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; font-size: 11px; white-space: nowrap; padding: 4px 8px; border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-  .action-btn:hover::after { opacity: 1; }
-
-  /* text cursor-only input */
-  #text-input-wrapper { position: fixed; display: none; z-index: 99999; }
-  #text-input {
-    background: transparent; border: none; outline: none;
-    color: #fff; font-size: 24px; padding: 0; min-width: 4px;
-    font-family: 'Caveat', cursive; caret-color: currentColor;
-    white-space: nowrap;
-  }
-
-  
-  #status.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-  #status span { color: #63b3ed; font-weight: 600; }
+  .action-btn { width:38px; height:38px; border:none; border-radius:12px; background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:background 0.15s,transform 0.1s;
+    color:rgba(255,255,255,0.5); position:relative; }
+  .action-btn:hover { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.9); transform:scale(1.05); }
+  .action-btn.danger:hover { background:rgba(252,129,129,0.15); color:#fc8181; }
+  .action-btn::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.85); color:#fff; font-size:11px; white-space:nowrap;
+    padding:4px 8px; border-radius:6px; pointer-events:none; opacity:0; transition:opacity 0.2s; }
+  .action-btn:hover::after { opacity:1; }
 </style>
 </head>
 <body>
 
 <canvas id="canvas"></canvas>
-<div id="text-input-wrapper"><input id="text-input" type="text" placeholder="" autocomplete="off" spellcheck="false"></div>
-
 
 <!-- FAB -->
 <button id="fab" data-tip="Expand toolbar">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+  </svg>
 </button>
 
 <!-- TOOLBAR -->
 <div id="toolbar">
+
   <!-- tools -->
-  <button class="tool-btn" id="tool-pen"         data-tool="pen"         data-tip="Pen (P)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></button>
-  <button class="tool-btn" id="tool-highlighter" data-tool="highlighter" data-tip="Highlighter (H)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l-6 6v3h3l6-6"/><path d="M22 5.5a2.121 2.121 0 00-3-3L9 12.5l3 3L22 5.5z"/></svg></button>
-  <button class="tool-btn" id="tool-arrow"       data-tool="arrow"       data-tip="Arrow (A)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="8 5 19 5 19 16"/></svg></button>
-  <button class="tool-btn active" id="tool-rect" data-tool="rect"        data-tip="Rectangle (R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>
-  <button class="tool-btn" id="tool-ellipse"     data-tool="ellipse"     data-tip="Ellipse (E)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg></button>
-  <button class="tool-btn" id="tool-line"        data-tool="line"        data-tip="Line (L)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="20" x2="20" y2="4"/></svg></button>
-  <button class="tool-btn" id="tool-text"        data-tool="text"        data-tip="Text (T)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></button>
-  <button class="tool-btn" id="tool-eraser"      data-tool="eraser"      data-tip="Eraser (X)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l10-10 7 7-3.5 3.5"/><path d="M6.5 17.5l4-4"/></svg></button>
-  <button class="tool-btn" id="tool-select"      data-tool="select"      data-tip="Select (V)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l6 16 3-7 7-3z"/></svg></button>
-  <button class="tool-btn" id="tool-spotlight"   data-tool="spotlight"   data-tip="Spotlight (S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button>
-  <button class="tool-btn" id="tool-counter"     data-tool="counter"     data-tip="Counter (N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><text x="12" y="16" text-anchor="middle" font-size="9" fill="currentColor" stroke="none" font-family="system-ui" font-weight="700">1</text></svg></button>
+  <button class="tool-btn" id="tool-pen" data-tool="pen" data-tip="Pen (P)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+  </button>
+  <button class="tool-btn" id="tool-highlighter" data-tool="highlighter" data-tip="Highlighter (H)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l-6 6v3h3l6-6"/><path d="M22 5.5a2.121 2.121 0 00-3-3L9 12.5l3 3L22 5.5z"/></svg>
+  </button>
+  <button class="tool-btn" id="tool-arrow" data-tool="arrow" data-tip="Arrow (A)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="8 5 19 5 19 16"/></svg>
+  </button>
+  <button class="tool-btn active" id="tool-rect" data-tool="rect" data-tip="Rectangle (R)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+  </button>
+  <button class="tool-btn" id="tool-ellipse" data-tool="ellipse" data-tip="Ellipse (E)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg>
+  </button>
+  <button class="tool-btn" id="tool-line" data-tool="line" data-tip="Line (L)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="20" x2="20" y2="4"/></svg>
+  </button>
+  <button class="tool-btn" id="tool-select" data-tool="select" data-tip="Select (V)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l6 16 3-7 7-3z"/></svg>
+  </button>
 
   <div class="divider"></div>
 
   <!-- smooth toggle -->
-  <div class="toggle-row" id="smooth-toggle" data-tip="Smooth pen">
+  <div class="toggle-row">
     <label>Smooth</label>
     <div class="toggle-track on" id="smooth-track"><div class="toggle-thumb"></div></div>
   </div>
 
   <!-- dim toggle -->
-  <div class="toggle-row" id="dim-toggle-row" data-tip="Dim outside shapes">
+  <div class="toggle-row">
     <label>Dim</label>
     <div class="toggle-track on" id="dim-track"><div class="toggle-thumb"></div></div>
   </div>
-  <div id="dim-slider-wrap" class="opacity-wrap">
+  <div class="opacity-wrap" id="dim-slider-wrap">
     <label>🌑</label>
     <input type="range" id="dim-slider" min="5" max="80" value="40">
   </div>
@@ -179,72 +179,72 @@
   <div class="divider"></div>
 
   <!-- actions -->
-  <button class="action-btn" id="btn-undo" data-tip="Undo (⌘Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1021 12"/></svg></button>
-  <button class="action-btn danger" id="btn-clear" data-tip="Clear all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg></button>
-  <button class="action-btn" id="btn-collapse" data-tip="Collapse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><polyline points="18 15 12 9 6 15"/></svg></button>
-  <button class="action-btn danger" id="btn-close" data-tip="Deactivate (⌘⇧A)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <button class="action-btn" id="btn-undo" data-tip="Undo (⌘Z)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1021 12"/></svg>
+  </button>
+  <button class="action-btn danger" id="btn-clear" data-tip="Clear all">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+  </button>
+  <button class="action-btn" id="btn-collapse" data-tip="Collapse">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+  <button class="action-btn danger" id="btn-close" data-tip="Deactivate">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+
 </div>
 
 <script>
 const { ipcRenderer } = window;
 
-// ═══════════════════════════════════════════════════════════════
-// SCENE GRAPH — every drawn item is an object, not flat pixels
-// ═══════════════════════════════════════════════════════════════
-// Object types: pen, highlighter, arrow, rect, ellipse, line, text, counter
-// Each has: { id, type, color, size, opacity, jitter?, points?, x1,y1,x2,y2?, text? }
-
-let scene = [];       // array of drawn objects
-let history = [];     // snapshots of scene for undo (array of arrays)
-let selected = null;  // currently selected object id
-let dragState = null; // { mode:'move'|'scale', handle, ox,oy, origObj }
-
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+// ── DOM ───────────────────────────────────────────────
+const canvas  = document.getElementById('canvas');
+const ctx     = canvas.getContext('2d');
 const toolbar = document.getElementById('toolbar');
-const fab = document.getElementById('fab');
-const statusEl = document.getElementById('status');
-const textInputWrapper = document.getElementById('text-input-wrapper');
-const textInput = document.getElementById('text-input');
+const fab     = document.getElementById('fab');
 
-// ── App state ────────────────────────────────────────
-let S = {
+// ── Scene ─────────────────────────────────────────────
+let scene    = [];
+let history  = [];
+let selected = null;
+let dragState = null;
+
+// ── State ─────────────────────────────────────────────
+const S = {
   tool: 'rect', color: '#ffffff', size: 4, opacity: 1.0,
   drawing: false, startX: 0, startY: 0,
   smoothing: true, rawPoints: [],
   dimOutside: true, dimAmount: 0.40,
   jitterProfile: null,
   toolbarCollapsed: true,
-  counterValue: 1,
 };
 
-// ── Canvas setup ──────────────────────────────────────
+// ── Canvas ────────────────────────────────────────────
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
+  canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
   redrawAll();
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// ═══════════════════════════════════════════════════════════════
-// RENDER — draws everything from scene array
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════
+// RENDER
+// ═════════════════════════════════════════════════════
 function redrawAll() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw dim overlay UNDER all objects (objects painted on top stay bright)
+  // Dim overlay — drawn first, objects go on top at full brightness
   if (S.dimOutside) {
-    const rects = scene.filter(o => o.type === 'rect' || o.type === 'ellipse');
-    if (rects.length > 0) {
+    const dimShapes = scene.filter(o => o.type === 'rect' || o.type === 'ellipse');
+    if (dimShapes.length > 0) {
       ctx.save();
       ctx.globalAlpha = S.dimAmount;
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // Cut out each rect bounding box so those areas are bright
       ctx.globalCompositeOperation = 'destination-out';
       ctx.globalAlpha = 1;
-      for (const r of rects) {
+      for (const r of dimShapes) {
         const pad = r.size + 2;
         const rx = Math.min(r.x1,r.x2)-pad, ry = Math.min(r.y1,r.y2)-pad;
         const rw = Math.abs(r.x2-r.x1)+pad*2, rh = Math.abs(r.y2-r.y1)+pad*2;
@@ -260,12 +260,8 @@ function redrawAll() {
     }
   }
 
-  // Draw all scene objects above dim
-  for (const obj of scene) {
-    drawObject(obj);
-  }
+  for (const obj of scene) drawObject(obj);
 
-  // Draw selection handles on top
   if (selected) {
     const obj = scene.find(o => o.id === selected);
     if (obj) drawSelectionHandles(obj);
@@ -276,27 +272,24 @@ function drawObject(obj) {
   ctx.save();
   ctx.globalAlpha = obj.opacity;
   ctx.strokeStyle = obj.color;
-  ctx.fillStyle = obj.color;
-  ctx.lineWidth = obj.size;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.fillStyle   = obj.color;
+  ctx.lineWidth   = obj.size;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
   ctx.globalCompositeOperation = 'source-over';
 
   switch (obj.type) {
     case 'pen':
-      drawSmoothPath(obj.points, obj.size, obj.color, obj.opacity, false);
+      drawSmooth(obj.points, obj.color, obj.size, obj.opacity);
       break;
     case 'highlighter':
-      ctx.globalAlpha = obj.opacity * 0.35;
-      ctx.lineWidth = obj.size * 6;
-      ctx.globalCompositeOperation = 'multiply';
-      drawRawPath(obj.points);
+      drawRaw(obj.points, obj.color, obj.size, obj.opacity, true);
       break;
     case 'rect':
-      drawWobblyRect(obj.x1, obj.y1, obj.x2, obj.y2, obj.jitter, obj.size);
+      drawWobblyRect(obj.x1, obj.y1, obj.x2, obj.y2, obj.jitter, obj.size, obj.color, obj.opacity);
       break;
     case 'ellipse': {
-      const cx = (obj.x1+obj.x2)/2, cy = (obj.y1+obj.y2)/2;
+      const cx=(obj.x1+obj.x2)/2, cy=(obj.y1+obj.y2)/2;
       ctx.beginPath();
       ctx.ellipse(cx, cy, Math.abs(obj.x2-obj.x1)/2, Math.abs(obj.y2-obj.y1)/2, 0, 0, Math.PI*2);
       ctx.stroke();
@@ -306,48 +299,39 @@ function drawObject(obj) {
       ctx.beginPath(); ctx.moveTo(obj.x1,obj.y1); ctx.lineTo(obj.x2,obj.y2); ctx.stroke();
       break;
     case 'arrow':
-      drawArrowShape(obj.x1, obj.y1, obj.x2, obj.y2, obj.size, obj.color, obj.opacity);
+      drawArrow(obj.x1, obj.y1, obj.x2, obj.y2, obj.size, obj.color, obj.opacity);
       break;
-    case 'text': {
-      const fs = Math.max(20, obj.size*5);
-      ctx.font = `${fs}px 'Caveat', cursive`;
-      ctx.fillStyle = obj.color;
-      ctx.fillText(obj.text, obj.x1, obj.y1);
-      break;
-    }
-    case 'counter': {
-      const r = obj.r;
-      ctx.beginPath(); ctx.arc(obj.x1, obj.y1, r, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.round(r*1.1)}px 'SF Pro Display', -apple-system, sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(obj.n, obj.x1, obj.y1+1);
-      break;
-    }
   }
   ctx.restore();
 }
 
-// ── Path helpers ──────────────────────────────────────
-function drawRawPath(pts) {
+// ── Path drawing ──────────────────────────────────────
+function drawRaw(pts, color, size, opacity, isHL) {
   if (!pts || pts.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = isHL ? size * 6 : size;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.globalAlpha = isHL ? opacity * 0.35 : opacity;
+  ctx.globalCompositeOperation = isHL ? 'multiply' : 'source-over';
   ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
   ctx.stroke();
+  ctx.restore();
 }
 
-function drawSmoothPath(pts, size, color, opacity, isHL) {
+function drawSmooth(pts, color, size, opacity) {
   if (!pts || pts.length < 2) return;
-  ctx.save();
-  ctx.strokeStyle = color; ctx.lineWidth = size; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  ctx.globalAlpha = opacity; ctx.globalCompositeOperation = 'source-over';
   const simplified = rdp(pts, 1.5);
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = size;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.globalAlpha = opacity; ctx.globalCompositeOperation = 'source-over';
   ctx.beginPath(); ctx.moveTo(simplified[0].x, simplified[0].y);
   if (simplified.length === 2) {
     ctx.lineTo(simplified[1].x, simplified[1].y);
   } else {
-    for (let i = 0; i < simplified.length-1; i++) {
+    for (let i = 0; i < simplified.length - 1; i++) {
       const p0 = simplified[Math.max(i-1,0)], p1 = simplified[i];
       const p2 = simplified[i+1], p3 = simplified[Math.min(i+2,simplified.length-1)];
       const t = 0.5;
@@ -363,48 +347,52 @@ function drawSmoothPath(pts, size, color, opacity, isHL) {
 }
 
 // ── RDP simplification ────────────────────────────────
-function rdp(points, epsilon) {
-  if (points.length < 3) return points;
+function rdp(pts, eps) {
+  if (pts.length < 3) return pts;
   let maxD = 0, idx = 0;
-  const [a, b] = [points[0], points[points.length-1]];
-  for (let i = 1; i < points.length-1; i++) {
-    const d = ptLineDist(points[i], a, b);
+  const [a, b] = [pts[0], pts[pts.length-1]];
+  for (let i = 1; i < pts.length-1; i++) {
+    const d = ptLineDist(pts[i], a, b);
     if (d > maxD) { maxD = d; idx = i; }
   }
-  if (maxD > epsilon) {
-    return [...rdp(points.slice(0,idx+1), epsilon).slice(0,-1), ...rdp(points.slice(idx), epsilon)];
+  if (maxD > eps) {
+    return [...rdp(pts.slice(0, idx+1), eps).slice(0,-1), ...rdp(pts.slice(idx), eps)];
   }
   return [a, b];
 }
 function ptLineDist(pt, a, b) {
-  const dx = b.x-a.x, dy = b.y-a.y, len2 = dx*dx+dy*dy;
-  if (len2 === 0) return Math.hypot(pt.x-a.x, pt.y-a.y);
+  const dx=b.x-a.x, dy=b.y-a.y, len2=dx*dx+dy*dy;
+  if (len2===0) return Math.hypot(pt.x-a.x, pt.y-a.y);
   const t = Math.max(0, Math.min(1, ((pt.x-a.x)*dx+(pt.y-a.y)*dy)/len2));
   return Math.hypot(pt.x-(a.x+t*dx), pt.y-(a.y+t*dy));
 }
 
 // ── Wobbly rect ───────────────────────────────────────
-function generateJitterProfile() {
-  const r = () => (Math.random()-0.5);
-  return { tl:{x:r(),y:r()}, tr:{x:r(),y:r()}, br:{x:r(),y:r()}, bl:{x:r(),y:r()},
+function generateJitter() {
+  const r = () => Math.random()-0.5;
+  return {
+    tl:{x:r(),y:r()}, tr:{x:r(),y:r()}, br:{x:r(),y:r()}, bl:{x:r(),y:r()},
     tm:{x:r()*0.3,y:r()}, rm:{x:r(),y:r()*0.3}, bm:{x:r()*0.3,y:r()}, lm:{x:r(),y:r()*0.3},
-    cp: Array.from({length:16}, () => r()) };
+    cp: Array.from({length:16}, () => r())
+  };
 }
 
-function drawWobblyRect(x1, y1, x2, y2, p, size) {
+function drawWobblyRect(x1,y1,x2,y2,p,size,color,opacity) {
   if (!p) return;
-  const w = x2-x1, h = y2-y1;
-  const cm = size*0.9+2, em = size*0.5+1, bm = size*0.4+1;
+  const w=x2-x1, h=y2-y1;
+  const cm=size*0.9+2, em=size*0.5+1, bm=size*0.4+1;
   const tlx=x1+p.tl.x*cm, tly=y1+p.tl.y*cm;
   const trx=x2+p.tr.x*cm, try_=y1+p.tr.y*cm;
   const brx=x2+p.br.x*cm, bry=y2+p.br.y*cm;
   const blx=x1+p.bl.x*cm, bly=y2+p.bl.y*cm;
   const tmx=x1+w*0.5+p.tm.x*em, tmy=y1+p.tm.y*em;
-  const rmx=x2+p.rm.x*em, rmy=y1+h*0.5+p.rm.y*em;
+  const rmx=x2+p.rm.x*em,        rmy=y1+h*0.5+p.rm.y*em;
   const bmx=x1+w*0.5+p.bm.x*em, bmy=y2+p.bm.y*em;
-  const lmx=x1+p.lm.x*em, lmy=y1+h*0.5+p.lm.y*em;
+  const lmx=x1+p.lm.x*em,        lmy=y1+h*0.5+p.lm.y*em;
   const c=p.cp;
-  ctx.beginPath(); ctx.moveTo(tlx, tly);
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=size; ctx.lineCap='round'; ctx.globalAlpha=opacity;
+  ctx.beginPath(); ctx.moveTo(tlx,tly);
   ctx.bezierCurveTo(tlx+w*0.2+c[0]*bm,tly+c[1]*bm, tmx-w*0.1+c[2]*bm,tmy+c[3]*bm, tmx,tmy);
   ctx.bezierCurveTo(tmx+w*0.1+c[4]*bm,tmy+c[5]*bm, trx-w*0.2+c[6]*bm,try_+c[7]*bm, trx,try_);
   ctx.bezierCurveTo(trx+c[8]*bm,try_+h*0.2+c[9]*bm, rmx+c[10]*bm,rmy-h*0.1+c[11]*bm, rmx,rmy);
@@ -414,14 +402,15 @@ function drawWobblyRect(x1, y1, x2, y2, p, size) {
   ctx.bezierCurveTo(blx+c[8]*bm,bly-h*0.2+c[9]*bm, lmx+c[10]*bm,lmy+h*0.1+c[11]*bm, lmx,lmy);
   ctx.bezierCurveTo(lmx+c[12]*bm,lmy-h*0.1+c[13]*bm, tlx+c[14]*bm,tly+h*0.2+c[15]*bm, tlx,tly);
   ctx.stroke();
+  ctx.restore();
 }
 
-function drawArrowShape(x1,y1,x2,y2,size,color,opacity) {
+function drawArrow(x1,y1,x2,y2,size,color,opacity) {
+  const headLen = Math.max(16, size*4);
+  const angle = Math.atan2(y2-y1, x2-x1);
   ctx.save();
   ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=size;
   ctx.lineCap='round'; ctx.globalAlpha=opacity;
-  const headLen = Math.max(16, size*4);
-  const angle = Math.atan2(y2-y1, x2-x1);
   ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(x2,y2);
@@ -431,140 +420,113 @@ function drawArrowShape(x1,y1,x2,y2,size,color,opacity) {
   ctx.restore();
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SELECTION & HIT TESTING
-// ═══════════════════════════════════════════════════════════════
-const HANDLE_R = 7; // selection handle radius
+// ═════════════════════════════════════════════════════
+// SELECTION
+// ═════════════════════════════════════════════════════
+const HANDLE_R = 7;
 
 function getBounds(obj) {
   switch (obj.type) {
     case 'rect': case 'ellipse': case 'line': case 'arrow':
-      return { x: Math.min(obj.x1,obj.x2), y: Math.min(obj.y1,obj.y2),
-               w: Math.abs(obj.x2-obj.x1), h: Math.abs(obj.y2-obj.y1) };
+      return { x:Math.min(obj.x1,obj.x2), y:Math.min(obj.y1,obj.y2),
+               w:Math.abs(obj.x2-obj.x1), h:Math.abs(obj.y2-obj.y1) };
     case 'pen': case 'highlighter': {
-      const xs = obj.points.map(p=>p.x), ys = obj.points.map(p=>p.y);
-      const pad = obj.size/2+2;
-      return { x: Math.min(...xs)-pad, y: Math.min(...ys)-pad,
-               w: Math.max(...xs)-Math.min(...xs)+pad*2, h: Math.max(...ys)-Math.min(...ys)+pad*2 };
+      const xs=obj.points.map(p=>p.x), ys=obj.points.map(p=>p.y);
+      const pad=obj.size/2+2;
+      return { x:Math.min(...xs)-pad, y:Math.min(...ys)-pad,
+               w:Math.max(...xs)-Math.min(...xs)+pad*2, h:Math.max(...ys)-Math.min(...ys)+pad*2 };
     }
-    case 'text': {
-      ctx.font = `${Math.max(20,obj.size*5)}px 'Caveat', cursive`;
-      const m = ctx.measureText(obj.text);
-      return { x: obj.x1, y: obj.y1 - Math.max(20,obj.size*5), w: m.width, h: Math.max(20,obj.size*5)*1.4 };
-    }
-    case 'counter':
-      return { x: obj.x1-obj.r, y: obj.y1-obj.r, w: obj.r*2, h: obj.r*2 };
-    default: return { x:0, y:0, w:0, h:0 };
+    default: return {x:0,y:0,w:0,h:0};
   }
 }
 
-// 8 handle positions on bounding box
-function getHandles(bounds) {
-  const {x,y,w,h} = bounds;
+function getHandles(b) {
   return [
-    {id:'tl',x,y},          {id:'tm',x:x+w/2,y},      {id:'tr',x:x+w,y},
-    {id:'ml',x,y:y+h/2},                               {id:'mr',x:x+w,y:y+h/2},
-    {id:'bl',x,y:y+h},      {id:'bm',x:x+w/2,y:y+h},  {id:'br',x:x+w,y:y+h},
+    {id:'tl',x:b.x,y:b.y},           {id:'tm',x:b.x+b.w/2,y:b.y},      {id:'tr',x:b.x+b.w,y:b.y},
+    {id:'ml',x:b.x,y:b.y+b.h/2},                                         {id:'mr',x:b.x+b.w,y:b.y+b.h/2},
+    {id:'bl',x:b.x,y:b.y+b.h},       {id:'bm',x:b.x+b.w/2,y:b.y+b.h},  {id:'br',x:b.x+b.w,y:b.y+b.h},
   ];
 }
 
 function drawSelectionHandles(obj) {
-  const bounds = getBounds(obj);
-  const {x,y,w,h} = bounds;
+  const b = getBounds(obj);
   ctx.save();
-  // Dashed selection box
-  ctx.strokeStyle = 'rgba(99,179,237,0.9)';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([5,3]);
-  ctx.strokeRect(x-4, y-4, w+8, h+8);
-  ctx.setLineDash([]);
-
-  // Delete button (top-right)
-  const delX = x+w+4+10, delY = y-4-10;
-  ctx.fillStyle = 'rgba(252,90,90,0.95)';
-  ctx.beginPath(); ctx.arc(delX, delY, 9, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(99,179,237,0.9)'; ctx.lineWidth=1.5;
+  ctx.setLineDash([5,3]); ctx.strokeRect(b.x-4,b.y-4,b.w+8,b.h+8); ctx.setLineDash([]);
+  // delete button
+  const delX=b.x+b.w+14, delY=b.y-14;
+  ctx.fillStyle='rgba(252,90,90,0.95)';
+  ctx.beginPath(); ctx.arc(delX,delY,9,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle='#fff'; ctx.lineWidth=1.8;
   ctx.beginPath(); ctx.moveTo(delX-4,delY-4); ctx.lineTo(delX+4,delY+4); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(delX+4,delY-4); ctx.lineTo(delX-4,delY+4); ctx.stroke();
-
-  // Scale handles
-  for (const h of getHandles(bounds)) {
-    ctx.fillStyle='#fff';
-    ctx.strokeStyle='rgba(99,179,237,0.9)';
-    ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.arc(h.x, h.y, HANDLE_R, 0, Math.PI*2);
-    ctx.fill(); ctx.stroke();
+  // handles
+  for (const h of getHandles(b)) {
+    ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(99,179,237,0.9)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(h.x,h.y,HANDLE_R,0,Math.PI*2); ctx.fill(); ctx.stroke();
   }
   ctx.restore();
 }
 
-// Hit test: returns { obj, handle } or null
 function hitTest(x, y) {
-  // Check delete button first (if something selected)
   if (selected) {
     const obj = scene.find(o=>o.id===selected);
     if (obj) {
       const b = getBounds(obj);
-      const delX = b.x+b.w+14, delY = b.y-14;
-      if (Math.hypot(x-delX, y-delY) < 12) return { action:'delete' };
-
-      // Check scale handles
+      const delX=b.x+b.w+14, delY=b.y-14;
+      if (Math.hypot(x-delX,y-delY) < 12) return {action:'delete'};
       for (const h of getHandles(b)) {
-        if (Math.hypot(x-h.x, y-h.y) < HANDLE_R+3) return { action:'scale', handle:h.id, obj };
+        if (Math.hypot(x-h.x,y-h.y) < HANDLE_R+3) return {action:'scale',handle:h.id,obj};
       }
     }
   }
-
-  // Hit test objects in reverse (top-most first)
-  for (let i = scene.length-1; i >= 0; i--) {
-    if (hitObject(scene[i], x, y)) return { action:'select', obj:scene[i] };
+  for (let i=scene.length-1; i>=0; i--) {
+    if (hitObject(scene[i],x,y)) return {action:'select',obj:scene[i]};
   }
   return null;
 }
 
 function hitObject(obj, x, y) {
   const b = getBounds(obj);
-  const pad = 10;
-  return x >= b.x-pad && x <= b.x+b.w+pad && y >= b.y-pad && y <= b.y+b.h+pad;
+  return x>=b.x-10 && x<=b.x+b.w+10 && y>=b.y-10 && y<=b.y+b.h+10;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════
 // HISTORY
-// ═══════════════════════════════════════════════════════════════
-function saveHistory() { history.push(JSON.parse(JSON.stringify(scene))); if (history.length > 50) history.shift(); }
-function undo() {
-  if (!history.length) return;
-  scene = history.pop();
-  selected = null;
-  redrawAll();
-}
-function clearAll() { saveHistory(); scene = []; selected = null; redrawAll(); }
+// ═════════════════════════════════════════════════════
+function saveHistory() { history.push(JSON.parse(JSON.stringify(scene))); if (history.length>50) history.shift(); }
+function undo() { if (!history.length) return; scene=history.pop(); selected=null; redrawAll(); }
+function clearAll() { saveHistory(); scene=[]; selected=null; redrawAll(); }
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════
 // IPC
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════
 ipcRenderer.on('overlay-activated', () => {
   canvas.style.display = 'block';
   if (S.toolbarCollapsed) fab.style.display = 'flex';
   else toolbar.classList.add('visible');
-  showStatus(); setCursor();
+  setCursor();
 });
 ipcRenderer.on('overlay-deactivated', () => {
-  toolbar.classList.remove('visible'); fab.style.display = 'none'; canvas.style.display = 'none'; hideStatus();
+  toolbar.classList.remove('visible');
+  fab.style.display = 'none';
+  canvas.style.display = 'none';
 });
 ipcRenderer.on('clear-canvas', clearAll);
 ipcRenderer.on('undo', undo);
 
-// ── Collapse ──────────────────────────────────────────
-document.getElementById('btn-collapse').addEventListener('click', e => { e.stopPropagation(); S.toolbarCollapsed=true; toolbar.classList.remove('visible'); setTimeout(()=>{ fab.style.display='flex'; },200); });
-fab.addEventListener('click', e => { e.stopPropagation(); S.toolbarCollapsed=false; fab.style.display='none'; toolbar.classList.add('visible'); });
+// ── Collapse / expand ─────────────────────────────────
+document.getElementById('btn-collapse').addEventListener('click', e => {
+  e.stopPropagation(); S.toolbarCollapsed=true;
+  toolbar.classList.remove('visible');
+  setTimeout(() => { fab.style.display='flex'; }, 200);
+});
+fab.addEventListener('click', e => {
+  e.stopPropagation(); S.toolbarCollapsed=false;
+  fab.style.display='none'; toolbar.classList.add('visible');
+});
 
-// ── Status ────────────────────────────────────────────
-
-function showStatus() {}
-function hideStatus() {}
-
-// ── Tool selection ────────────────────────────────────
+// ── Tools ─────────────────────────────────────────────
 document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
   btn.addEventListener('click', e => { e.stopPropagation(); setTool(btn.dataset.tool); });
 });
@@ -574,46 +536,54 @@ function setTool(tool) {
   setCursor();
 }
 function setCursor() {
-  const map = { pen:'crosshair', highlighter:'crosshair', arrow:'crosshair', rect:'crosshair',
-    ellipse:'crosshair', line:'crosshair', text:'text', eraser:'cell',
-    spotlight:'none', counter:'crosshair', select:'default' };
+  const map = {pen:'crosshair',highlighter:'crosshair',arrow:'crosshair',
+               rect:'crosshair',ellipse:'crosshair',line:'crosshair',select:'default'};
   canvas.style.cursor = map[S.tool] || 'crosshair';
 }
 
-// ── Smooth toggle ─────────────────────────────────────
+// ── Toggles ───────────────────────────────────────────
 document.getElementById('smooth-track').addEventListener('click', e => {
   e.stopPropagation(); S.smoothing=!S.smoothing;
-  document.getElementById('smooth-track').classList.toggle('on',S.smoothing);
+  document.getElementById('smooth-track').classList.toggle('on', S.smoothing);
 });
-
-// ── Dim toggle ────────────────────────────────────────
 document.getElementById('dim-track').addEventListener('click', e => {
   e.stopPropagation(); S.dimOutside=!S.dimOutside;
-  document.getElementById('dim-track').classList.toggle('on',S.dimOutside);
-  document.getElementById('dim-slider-wrap').style.opacity = S.dimOutside?'1':'0.35';
-  document.getElementById('dim-slider-wrap').style.pointerEvents = S.dimOutside?'all':'none';
+  document.getElementById('dim-track').classList.toggle('on', S.dimOutside);
+  const sw = document.getElementById('dim-slider-wrap');
+  sw.style.opacity = S.dimOutside ? '1' : '0.35';
+  sw.style.pointerEvents = S.dimOutside ? 'all' : 'none';
   redrawAll();
 });
 document.getElementById('dim-slider').addEventListener('input', e => {
   e.stopPropagation(); S.dimAmount=parseInt(e.target.value)/100; redrawAll();
 });
-document.getElementById('dim-slider').addEventListener('mousedown', e=>e.stopPropagation());
+document.getElementById('dim-slider').addEventListener('mousedown', e => e.stopPropagation());
 
-// ── Size ──────────────────────────────────────────────
+// ── Sizes ─────────────────────────────────────────────
 const sizeMap = {'size-sm':2,'size-md':4,'size-lg':10};
 document.querySelectorAll('.size-btn').forEach(btn => {
-  btn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); S.size=sizeMap[btn.id]; });
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); S.size=sizeMap[btn.id];
+  });
 });
 
-// ── Color ─────────────────────────────────────────────
-document.querySelectorAll('.color-swatch').forEach(s => {
-  s.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active')); s.classList.add('active'); S.color=s.dataset.color; });
+// ── Colors ────────────────────────────────────────────
+document.querySelectorAll('.color-swatch').forEach(sw => {
+  sw.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));
+    sw.classList.add('active'); S.color=sw.dataset.color;
+  });
 });
 
 // ── Opacity ───────────────────────────────────────────
-document.getElementById('opacity-slider').addEventListener('input', e => { S.opacity=parseInt(e.target.value)/100; });
+document.getElementById('opacity-slider').addEventListener('input', e => {
+  S.opacity = parseInt(e.target.value)/100;
+});
 
-// ── Action buttons ────────────────────────────────────
+// ── Actions ───────────────────────────────────────────
 document.getElementById('btn-undo').addEventListener('click', e=>{e.stopPropagation();undo();});
 document.getElementById('btn-clear').addEventListener('click', e=>{e.stopPropagation();clearAll();});
 document.getElementById('btn-close').addEventListener('click', e=>{
@@ -623,12 +593,11 @@ document.getElementById('btn-close').addEventListener('click', e=>{
 
 // ── Keyboard ──────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.target===textInput) return;
-  const map={p:'pen',h:'highlighter',a:'arrow',r:'rect',e:'ellipse',l:'line',t:'text',x:'eraser',s:'spotlight',n:'counter',v:'select'};
+  const map = {p:'pen',h:'highlighter',a:'arrow',r:'rect',e:'ellipse',l:'line',v:'select'};
   if (map[e.key]) { setTool(map[e.key]); return; }
-  if ((e.metaKey||e.ctrlKey)&&e.key==='z') { undo(); return; }
+  if ((e.metaKey||e.ctrlKey) && e.key==='z') { undo(); return; }
   if (e.key==='Delete'||e.key==='Backspace') {
-    if (selected && e.target!==textInput) { saveHistory(); scene=scene.filter(o=>o.id!==selected); selected=null; redrawAll(); }
+    if (selected) { saveHistory(); scene=scene.filter(o=>o.id!==selected); selected=null; redrawAll(); }
     return;
   }
   if (e.key==='Escape') {
@@ -638,126 +607,90 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════
 // MOUSE EVENTS
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════
 canvas.addEventListener('mousedown', onMouseDown);
 canvas.addEventListener('mousemove', onMouseMove);
-canvas.addEventListener('mouseup', onMouseUp);
+canvas.addEventListener('mouseup',   onMouseUp);
+window.addEventListener('mouseup',   onMouseUp); // catch releases outside canvas
 
-// preview object shown while drawing (not yet committed)
 let previewObj = null;
-
+function newId() { return Date.now() + Math.random(); }
 function getPos(e) { return {x:e.clientX, y:e.clientY}; }
-
-function newId() { return Date.now()+Math.random(); }
 
 function onMouseDown(e) {
   const {x,y} = getPos(e);
   S.startX=x; S.startY=y;
 
-  // ── SELECT TOOL ──────────────────────────────────────
+  // SELECT
   if (S.tool==='select') {
     const hit = hitTest(x,y);
-    if (hit) {
-      if (hit.action==='delete') {
-        saveHistory(); scene=scene.filter(o=>o.id!==selected); selected=null; redrawAll(); return;
-      }
-      if (hit.action==='scale') {
-        const obj = hit.obj;
-        dragState = { mode:'scale', handle:hit.handle, ox:x, oy:y,
-          origObj: JSON.parse(JSON.stringify(obj)) };
-        return;
-      }
-      if (hit.action==='select') {
-        selected = hit.obj.id;
-        dragState = { mode:'move', ox:x, oy:y, origObj: JSON.parse(JSON.stringify(hit.obj)) };
-        redrawAll(); return;
-      }
-    } else {
-      selected=null; redrawAll();
+    if (!hit) { selected=null; redrawAll(); return; }
+    if (hit.action==='delete') {
+      saveHistory(); scene=scene.filter(o=>o.id!==selected); selected=null; redrawAll(); return;
     }
-    return;
-  }
-
-  // ── ERASER ───────────────────────────────────────────
-  if (S.tool==='eraser') {
-    const hit = hitTest(x,y);
-    if (hit && hit.action==='select') {
-      saveHistory(); scene=scene.filter(o=>o.id!==hit.obj.id); redrawAll();
+    if (hit.action==='scale') {
+      dragState={mode:'scale',handle:hit.handle,ox:x,oy:y,origObj:JSON.parse(JSON.stringify(hit.obj))};
+      return;
     }
-    return;
-  }
-
-  // ── TEXT ─────────────────────────────────────────────
-  if (S.tool==='text') { showTextInput(x,y); return; }
-
-  // ── COUNTER ──────────────────────────────────────────
-  if (S.tool==='counter') {
-    saveHistory();
-    const r = Math.max(16, S.size*3+10);
-    scene.push({id:newId(), type:'counter', color:S.color, opacity:S.opacity, size:S.size, x1:x, y1:y, r, n:S.counterValue++});
+    selected=hit.obj.id;
+    dragState={mode:'move',ox:x,oy:y,origObj:JSON.parse(JSON.stringify(hit.obj))};
     redrawAll(); return;
   }
 
-  // ── SPOTLIGHT ────────────────────────────────────────
-  if (S.tool==='spotlight') { S.drawing=true; drawSpotlightDirect(x,y); return; }
-
-  // ── DRAWING TOOLS ────────────────────────────────────
-  S.drawing = true;
-  if (S.tool==='pen' || S.tool==='highlighter') {
-    S.rawPoints = [{x,y}];
+  // DRAWING
+  S.drawing=true;
+  if (S.tool==='pen'||S.tool==='highlighter') {
+    S.rawPoints=[{x,y}];
   } else {
-    // shape tools: generate jitter now for rect
-    S.jitterProfile = (S.tool==='rect') ? generateJitterProfile() : null;
+    S.jitterProfile = S.tool==='rect' ? generateJitter() : null;
   }
 }
 
 function onMouseMove(e) {
   const {x,y} = getPos(e);
 
-  // ── SELECT drag ──────────────────────────────────────
+  // SELECT drag
   if (S.tool==='select' && dragState) {
-    const obj = scene.find(o=>o.id===selected);
+    const obj=scene.find(o=>o.id===selected);
     if (!obj) return;
     const dx=x-dragState.ox, dy=y-dragState.oy;
-    const orig = dragState.origObj;
-
+    const orig=dragState.origObj;
     if (dragState.mode==='move') {
       if ('x1' in orig) { obj.x1=orig.x1+dx; obj.y1=orig.y1+dy; }
       if ('x2' in orig) { obj.x2=orig.x2+dx; obj.y2=orig.y2+dy; }
       if (orig.points) obj.points=orig.points.map(p=>({x:p.x+dx,y:p.y+dy}));
-    } else if (dragState.mode==='scale') {
-      scaleObject(obj, orig, dragState.handle, dx, dy);
+    } else {
+      scaleObj(obj,orig,dragState.handle,dx,dy);
     }
     redrawAll(); return;
   }
 
   if (!S.drawing) return;
 
-  // ── SPOTLIGHT ────────────────────────────────────────
-  if (S.tool==='spotlight') { drawSpotlightDirect(x,y); return; }
-
-  // ── PEN live preview ─────────────────────────────────
-  if (S.tool==='pen' || S.tool==='highlighter') {
+  // PEN live preview — quadratic midpoint smoothing
+  if (S.tool==='pen'||S.tool==='highlighter') {
     S.rawPoints.push({x,y});
-    // Fast live preview — just the raw path, replaced on mouseup
     redrawAll();
+    const pts=S.rawPoints, isHL=S.tool==='highlighter';
     ctx.save();
-    if (S.tool==='highlighter') {
-      ctx.globalAlpha=S.opacity*0.35; ctx.globalCompositeOperation='multiply';
-      ctx.strokeStyle=S.color; ctx.lineWidth=S.size*6; ctx.lineCap='round';
-      drawRawPath(S.rawPoints);
-    } else {
-      ctx.globalAlpha=S.opacity; ctx.strokeStyle=S.color; ctx.lineWidth=S.size; ctx.lineCap='round';
-      drawRawPath(S.rawPoints);
+    ctx.strokeStyle=S.color; ctx.lineWidth=isHL?S.size*6:S.size;
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.globalAlpha=isHL?S.opacity*0.35:S.opacity;
+    ctx.globalCompositeOperation=isHL?'multiply':'source-over';
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    for (let i=1; i<pts.length-1; i++) {
+      const mx=(pts[i].x+pts[i+1].x)/2, my=(pts[i].y+pts[i+1].y)/2;
+      ctx.quadraticCurveTo(pts[i].x,pts[i].y,mx,my);
     }
-    ctx.restore();
+    if (pts.length>1) ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+    ctx.stroke(); ctx.restore();
     return;
   }
 
-  // ── SHAPE live preview ────────────────────────────────
-  previewObj = makeShapeObj(S.tool, S.startX, S.startY, x, y);
+  // SHAPE live preview
+  previewObj = makeShapeObj(S.tool,S.startX,S.startY,x,y);
   redrawAll();
   if (previewObj) drawObject(previewObj);
 }
@@ -765,117 +698,69 @@ function onMouseMove(e) {
 function onMouseUp(e) {
   const {x,y} = getPos(e);
 
-  // ── SELECT drag end ───────────────────────────────────
   if (S.tool==='select' && dragState) {
-    saveHistory();
-    dragState=null; return;
+    saveHistory(); dragState=null; return;
   }
 
   if (!S.drawing) return;
   S.drawing=false;
 
-  // ── SPOTLIGHT end ─────────────────────────────────────
-  if (S.tool==='spotlight') {
-    redrawAll(); return;
-  }
-
-  // ── PEN commit ────────────────────────────────────────
-  if (S.tool==='pen' || S.tool==='highlighter') {
-    if (S.rawPoints.length > 1) {
+  // PEN commit
+  if (S.tool==='pen'||S.tool==='highlighter') {
+    if (S.rawPoints.length>1) {
       saveHistory();
       scene.push({
         id:newId(), type:S.tool, color:S.color, opacity:S.opacity, size:S.size,
-        points: S.smoothing && S.tool==='pen' ? rdp(S.rawPoints,1.5) : S.rawPoints.slice()
+        points: S.smoothing&&S.tool==='pen' ? rdp(S.rawPoints,1.5) : S.rawPoints.slice()
       });
       S.rawPoints=[];
     }
     redrawAll(); return;
   }
 
-  // ── SHAPE commit ─────────────────────────────────────
-  const obj = makeShapeObj(S.tool, S.startX, S.startY, x, y);
-  if (obj && (Math.abs(x-S.startX)>4 || Math.abs(y-S.startY)>4)) {
-    saveHistory();
-    scene.push(obj);
+  // SHAPE commit
+  const obj=makeShapeObj(S.tool,S.startX,S.startY,x,y);
+  if (obj && (Math.abs(x-S.startX)>4||Math.abs(y-S.startY)>4)) {
+    saveHistory(); scene.push(obj);
   }
-  previewObj=null;
-  S.jitterProfile=null;
+  previewObj=null; S.jitterProfile=null;
   redrawAll();
 }
 
-function makeShapeObj(tool, x1, y1, x2, y2) {
-  const base = {id:newId(), type:tool, color:S.color, opacity:S.opacity, size:S.size, x1,y1,x2,y2};
-  if (tool==='rect') base.jitter = S.jitterProfile || generateJitterProfile();
+function makeShapeObj(tool,x1,y1,x2,y2) {
+  const base={id:newId(),type:tool,color:S.color,opacity:S.opacity,size:S.size,x1,y1,x2,y2};
+  if (tool==='rect') base.jitter=S.jitterProfile||generateJitter();
   return base;
 }
 
-// ── Scale object by handle drag ───────────────────────
-function scaleObject(obj, orig, handle, dx, dy) {
-  const setX1 = handle.includes('l');
-  const setX2 = handle.includes('r');
-  const setY1 = handle.startsWith('t') || handle==='ml'||handle==='mr' ? false : false;
-  const isTop = handle[0]==='t' || handle==='tm';
-  const isBot = handle[0]==='b' || handle==='bm';
-
+function scaleObj(obj,orig,handle,dx,dy) {
+  const isL=handle.includes('l'), isR=handle.includes('r');
+  const isT=handle[0]==='t'||handle==='tm', isB=handle[0]==='b'||handle==='bm';
   if ('x1' in orig) {
-    if (setX1) obj.x1=orig.x1+dx;
-    if (setX2) obj.x2=orig.x2+dx;
-    if (isTop) obj.y1=orig.y1+dy;
-    if (isBot) obj.y2=orig.y2+dy;
+    // Resolve geometric edges so handles always drag the correct side
+    // regardless of which direction the shape was originally drawn
+    const gL = orig.x1 <= orig.x2 ? 'x1' : 'x2';
+    const gR = orig.x1 <= orig.x2 ? 'x2' : 'x1';
+    const gT = orig.y1 <= orig.y2 ? 'y1' : 'y2';
+    const gB = orig.y1 <= orig.y2 ? 'y2' : 'y1';
+    if (isL) obj[gL] = orig[gL] + dx;
+    if (isR) obj[gR] = orig[gR] + dx;
+    if (isT) obj[gT] = orig[gT] + dy;
+    if (isB) obj[gB] = orig[gB] + dy;
   }
   if (orig.points) {
-    // Scale pen paths by scaling around bounding box
-    const ob = { x:Math.min(orig.x1||0,orig.x2||0), y:Math.min(orig.y1||0,orig.y2||0),
-                 w:Math.abs((orig.x2||0)-(orig.x1||0)), h:Math.abs((orig.y2||0)-(orig.y1||0)) };
-    const nb = getBounds(obj);
-    if (ob.w>0 && ob.h>0) obj.points=orig.points.map(p=>({
+    const ob={x:Math.min(orig.x1||0,orig.x2||0),y:Math.min(orig.y1||0,orig.y2||0),
+              w:Math.abs((orig.x2||0)-(orig.x1||0)),h:Math.abs((orig.y2||0)-(orig.y1||0))};
+    const nb=getBounds(obj);
+    if (ob.w>0&&ob.h>0) obj.points=orig.points.map(p=>({
       x:nb.x+(p.x-ob.x)/ob.w*nb.w, y:nb.y+(p.y-ob.y)/ob.h*nb.h
     }));
   }
 }
 
-// ── Spotlight (direct canvas, not scene) ─────────────
-function drawSpotlightDirect(x,y) {
-  redrawAll(); // draw scene first
-  ctx.save();
-  ctx.globalAlpha=0.55; ctx.fillStyle='#000';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.globalCompositeOperation='destination-out'; ctx.globalAlpha=1;
-  const r=120;
-  const grad=ctx.createRadialGradient(x,y,r*0.4,x,y,r);
-  grad.addColorStop(0,'rgba(0,0,0,1)'); grad.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-}
-
-// ── Text input (transparent, cursor only) ────────────
-function showTextInput(x,y) {
-  textInputWrapper.style.display='block';
-  textInputWrapper.style.left=x+'px';
-  textInputWrapper.style.top=(y-28)+'px';
-  textInput.style.color=S.color;
-  textInput.style.fontSize=Math.max(20,S.size*5)+'px';
-  textInput.value=''; textInput.focus();
-
-  const commit=()=>{
-    const val=textInput.value.trim();
-    if (val) {
-      saveHistory();
-      scene.push({id:newId(), type:'text', color:S.color, opacity:S.opacity, size:S.size, x1:x, y1:y, text:val});
-      redrawAll();
-    }
-    textInputWrapper.style.display='none';
-    textInput.removeEventListener('keydown',onKey);
-    textInput.removeEventListener('blur',commit);
-  };
-  const onKey=e=>{ e.stopPropagation(); if(e.key==='Enter'||e.key==='Escape') commit(); };
-  textInput.addEventListener('keydown',onKey);
-  setTimeout(()=>textInput.addEventListener('blur',commit),50);
-}
-
-// Block toolbar events
-document.getElementById('toolbar').addEventListener('mousedown',e=>e.stopPropagation());
-fab.addEventListener('mousedown',e=>e.stopPropagation());
+// Block toolbar clicks from reaching canvas
+document.getElementById('toolbar').addEventListener('mousedown', e=>e.stopPropagation());
+fab.addEventListener('mousedown', e=>e.stopPropagation());
 </script>
 </body>
 </html>
