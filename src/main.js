@@ -116,8 +116,16 @@ app.whenReady().then(() => {
     }
   });
 
+  // Global shortcut to close menu/overlay: Escape
+  globalShortcut.register('Escape', () => {
+    // Close menu if open (by clicking elsewhere)
+    if (isActive) {
+      toggleOverlay();
+    }
+  });
+
   // Global shortcut to undo: Cmd+Z (when overlay active)
-  globalShortcut.register('CommandOrControl+Shift+Z', () => {
+  globalShortcut.register('CommandOrControl+Z', () => {
     if (overlayWindow && isActive) {
       overlayWindow.webContents.send('undo');
     }
@@ -125,7 +133,7 @@ app.whenReady().then(() => {
 
   app.dock.hide(); // Hide from dock since it's a utility overlay
 
-  console.log('ScreenInk running. Press Cmd+Shift+A to toggle overlay.');
+  console.log('ScreenInk running. Press Cmd+Shift+A to toggle overlay, or Escape to close.');
 });
 
 ipcMain.on('deactivate-overlay', () => {
