@@ -56,7 +56,7 @@ function createTray() {
   }
 
   tray = new Tray(icon);
-  tray.setToolTip('ScreenInk — Click to toggle');
+  tray.setToolTip('ScreenInk — Right-click for options');
 
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Toggle Overlay', accelerator: 'CmdOrCtrl+Shift+A', click: toggleOverlay },
@@ -66,9 +66,6 @@ function createTray() {
   ]);
 
   tray.setContextMenu(contextMenu);
-
-  // Left-click toggles the overlay directly
-  tray.on('click', toggleOverlay);
 }
 
 function toggleOverlay() {
