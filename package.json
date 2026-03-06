@@ -15,13 +15,10 @@
     "mac": {
       "category": "public.app-category.utilities",
       "target": ["dmg"],
-      "icon": "assets/icon.icns"
-    },
-    "win": {
-      "icon": "assets/icon.png"
-    },
-    "linux": {
-      "icon": "assets/icon.png"
+      "icon": "src/icon.png",
+      "extendInfo": {
+        "LSUIElement": true
+      }
     },
     "files": [
       "src/**/*",

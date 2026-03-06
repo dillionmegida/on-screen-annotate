@@ -1,12 +1,15 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, Menu, Tray, nativeImage, systemPreferences } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
 
 let overlayWindow = null;
 let tray = null;
 let isActive = false;
 
+// ── Hide from dock immediately ─────────────────────────────────
+// This must be called before app is ready for full effect
+if (app.dock) app.dock.hide();
+
 function createOverlayWindow() {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const fullBounds = screen.getPrimaryDisplay().bounds;
 
   overlayWindow = new BrowserWindow({
@@ -22,6 +25,8 @@ function createOverlayWindow() {
     movable: false,
     skipTaskbar: true,
     focusable: true,
+    // Prevent from showing in Cmd+Tab switcher
+    type: 'panel',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -29,134 +34,91 @@ function createOverlayWindow() {
     }
   });
 
-  // Start with click-through (invisible to interaction)
   overlayWindow.setIgnoreMouseEvents(true, { forward: true });
   overlayWindow.setAlwaysOnTop(true, 'screen-saver');
-  overlayWindow.setVisibleOnAllWorkspaces(true);
+  overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
   overlayWindow.loadFile(path.join(__dirname, 'overlay.html'));
 
-  overlayWindow.on('closed', () => {
-    overlayWindow = null;
-  });
+  overlayWindow.on('closed', () => { overlayWindow = null; });
 }
 
 function createTray() {
-  // On macOS, Tray creates an item in the top menu bar (like Docker, battery, etc.)
-  // Use template icon for automatic dark/light mode adaptation
-  const trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/tray-template.png'));
-  tray = new Tray(trayIcon);
-  
-  // Set a title to show alongside the icon in the menu bar
-  tray.setTitle('ScreenInk');
+  // Load the white template icon for menu bar
+  let icon;
+  try {
+    icon = nativeImage.createFromPath(path.join(__dirname, 'trayIcon.png'));
+    // Mark as template so macOS handles dark/light mode automatically
+    icon.setTemplateImage(true);
+  } catch (e) {
+    // Fallback: programmatically drawn minimal icon
+    icon = nativeImage.createEmpty();
+  }
+
+  tray = new Tray(icon);
+  tray.setToolTip('ScreenInk — Click to toggle');
 
   const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Toggle Overlay (⌘⇧A)',
-      accelerator: 'CommandOrControl+Shift+A',
-      click: () => toggleOverlay()
-    },
+    { label: 'Toggle Overlay', accelerator: 'CmdOrCtrl+Shift+A', click: toggleOverlay },
+    { label: 'Clear Canvas',   accelerator: 'CmdOrCtrl+Shift+C', click: () => { if (overlayWindow) overlayWindow.webContents.send('clear-canvas'); } },
     { type: 'separator' },
-    {
-      label: 'Clear Canvas',
-      accelerator: 'CommandOrControl+Shift+C',
-      click: () => {
-        if (overlayWindow) {
-          overlayWindow.webContents.send('clear-canvas');
-        }
-      }
-    },
-    {
-      label: 'Undo',
-      accelerator: 'CommandOrControl+Z',
-      click: () => {
-        if (overlayWindow && isActive) {
-          overlayWindow.webContents.send('undo');
-        }
-      }
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit ScreenInk',
-      accelerator: 'CommandOrControl+Q',
-      click: () => app.quit()
-    }
+    { label: 'Quit ScreenInk', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }
   ]);
 
-  tray.setToolTip('ScreenInk - Screen Annotation Tool');
   tray.setContextMenu(contextMenu);
+
+  // Left-click toggles the overlay directly
+  tray.on('click', toggleOverlay);
 }
 
 function toggleOverlay() {
+  if (!overlayWindow) return;
   isActive = !isActive;
 
   if (isActive) {
     overlayWindow.setIgnoreMouseEvents(false);
     overlayWindow.focus();
     overlayWindow.webContents.send('overlay-activated');
+    tray.setToolTip('ScreenInk — Active (⌘⇧A to hide)');
   } else {
     overlayWindow.setIgnoreMouseEvents(true, { forward: true });
     overlayWindow.webContents.send('overlay-deactivated');
+    tray.setToolTip('ScreenInk — Click to toggle');
   }
 }
 
 app.whenReady().then(() => {
+  // Ensure no dock icon
+  if (app.dock) app.dock.hide();
+
   createOverlayWindow();
   createTray();
 
-  // Global shortcut to toggle overlay: Cmd+Shift+A
-  globalShortcut.register('CommandOrControl+Shift+A', () => {
-    toggleOverlay();
-  });
-
-  // Global shortcut to clear canvas: Cmd+Shift+C
+  // Global shortcuts
+  globalShortcut.register('CommandOrControl+Shift+A', toggleOverlay);
   globalShortcut.register('CommandOrControl+Shift+C', () => {
-    if (overlayWindow) {
-      overlayWindow.webContents.send('clear-canvas');
-    }
+    if (overlayWindow) overlayWindow.webContents.send('clear-canvas');
+  });
+  globalShortcut.register('CommandOrControl+Shift+Z', () => {
+    if (overlayWindow && isActive) overlayWindow.webContents.send('undo');
   });
 
-  // Global shortcut to close menu/overlay: Escape
-  globalShortcut.register('Escape', () => {
-    // Close menu if open (by clicking elsewhere)
-    if (isActive) {
-      toggleOverlay();
-    }
-  });
-
-  // Global shortcut to undo: Cmd+Z (when overlay active)
-  globalShortcut.register('CommandOrControl+Z', () => {
-    if (overlayWindow && isActive) {
-      overlayWindow.webContents.send('undo');
-    }
-  });
-
-  app.dock.hide(); // Hide from dock since it's a utility overlay
-
-  console.log('ScreenInk running. Press Cmd+Shift+A to toggle overlay, or Escape to close.');
+  console.log('ScreenInk running in menu bar. Press ⌘⇧A to toggle.');
 });
 
 ipcMain.on('deactivate-overlay', () => {
   isActive = false;
-  if (overlayWindow) {
-    overlayWindow.setIgnoreMouseEvents(true, { forward: true });
-  }
+  if (overlayWindow) overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+  if (tray) tray.setToolTip('ScreenInk — Click to toggle');
 });
 
 ipcMain.on('set-ignore-mouse', (event, ignore) => {
   if (overlayWindow) {
-    if (ignore) {
-      overlayWindow.setIgnoreMouseEvents(true, { forward: true });
-    } else {
-      overlayWindow.setIgnoreMouseEvents(false);
-    }
+    if (ignore) overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+    else overlayWindow.setIgnoreMouseEvents(false);
   }
 });
 
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+app.on('will-quit', () => globalShortcut.unregisterAll());
+app.on('window-all-closed', () => { /* keep running in menu bar */ });
+app.on('before-quit', () => { if (tray) tray.destroy(); });
